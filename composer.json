@@ -1,0 +1,26 @@
+{
+  "name": "md-netdesign/contao-entities",
+  "description": "Mapped doctrine entities inside the Contao backend.",
+  "type": "contao-bundle",
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "MdNetdesign\\ContaoEntities\\": "src/"
+    }
+  },
+  "authors": [
+    {
+      "name": "Tom Janke",
+      "email": "tom.janke@md-netdesign.de"
+    }
+  ],
+  "require": {
+    "php": "^8.0",
+    "contao/core-bundle": "^4.12",
+    "md-netdesign/auto-type": "^1.1",
+    "symfony/http-kernel": "^5.3",
+    "symfony/config": "^5.3",
+    "symfony/dependency-injection": "^5.3",
+    "twig/twig": "^3.3"
+  }
+}

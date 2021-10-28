@@ -1,0 +1,15 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+
+  MdNetdesign\ContaoEntities\:
+    resource: '../../'
+    exclude:
+      - '../../DependencyInjection/'
+      - '../../Entity/'
+      - '../../Kernel.php'
+      - '../../Tests/'
+
+  MdNetdesign\ContaoEntities\Controller\FileHelperController:
+    tags: [ 'controller.service_arguments' ]

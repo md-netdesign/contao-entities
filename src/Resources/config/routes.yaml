@@ -1,0 +1,3 @@
+contao_entities.controller:
+  resource: '@ContaoEntities/Controller/FileHelperController.php'
+  type: annotation

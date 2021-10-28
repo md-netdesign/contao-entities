@@ -1,0 +1,43 @@
+{% extends "@ContaoCore/Backend/be_page.html.twig" %}
+
+{% block headline %}
+  {{ (entity is null ? 'create_instance' : 'edit_instance')|trans({
+    __type__: instanceTitle|trans,
+    __id__: entity.id|default(null)
+  }) }}
+{% endblock %}
+
+{% block error %}{% endblock %}
+
+{% block main %}
+  <div id="tl_buttons">
+    <a href="{{ path(baseRoute ~ '-list') }}" class="header_back" accesskey="b" title="{{ 'back'|trans }}" onclick="Backend.getScrollOffset()">{{ 'back'|trans }}</a>
+  </div>
+  {% form_theme form contaoEntitiesFormTheme|default('@ContaoEntities/form-theme.html.twig') %}
+  {{ form_start(form) }}
+
+  <div class="tl_formbody_edit">
+
+    {% for fieldset in fieldsets %}
+      <fieldset id="pal_form" class="tl_box">
+        <legend onclick="this.parentElement.classList.toggle('collapsed');">{{ fieldset|default('default_fieldset')|trans }}</legend>
+
+        {% for children in form.children|filter(c => c.vars.row_attr['data-fieldset']|default(null) == fieldset) %}
+          {{ form_row(children) }}
+        {% endfor %}
+
+        <div class="clr"></div>
+      </fieldset>
+    {% endfor %}
+
+  </div>
+
+  <div class="tl_formbody_submit">
+    <div class="tl_submit_container">
+      <button type="submit" name="save" id="save" class="tl_submit" accesskey="s">{{ 'save'|trans }}</button>
+      <button type="submit" name="save" value="close" id="saveNclose" class="tl_submit" accesskey="c">{{ 'save_and_close'|trans }}</button>
+    </div>
+  </div>
+
+  {{ form_end(form) }}
+{% endblock %}

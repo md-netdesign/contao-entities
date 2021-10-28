@@ -1,0 +1,25 @@
+save: Save
+save_and_close: Save and close
+default_fieldset: values
+back: Back
+edit_instance: Edit __type__ ID __id__
+create_instance: create __type__
+do.filter: 'Filter:'
+do.order_by: 'Sort:'
+do.search: 'Search:'
+do.limit: 'Show:'
+datasets: data sets
+all: all
+apply: apply
+reset: reset
+search: Search
+order_by: Sort by
+filter: filter
+new: New
+no_entries_found: No entries found.
+change_selection: Change selection
+delete_entry: remove entry?
+edit_element: Edit element ID __id__
+duplicate_element: Duplicate element ID __id__
+delete_element: delete element ID __id__
+delete_confirm: Delete element ID __id__?

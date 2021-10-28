@@ -1,0 +1,116 @@
+{% extends "@ContaoCore/Backend/be_page.html.twig" %}
+
+{% block headline %}
+  {{ title|trans }}
+{% endblock %}
+
+{% block error %}{% endblock %}
+
+{% block main %}
+  {% set limitSubpanel %}
+    <div class="tl_limit tl_subpanel">
+      <strong>
+        <label for="page">{{ 'do.limit'|trans }}</label>
+      </strong>
+      <select id="page" class="tl_select" onchange="location.href={{ path(baseRoute ~ '-list', {page: '0'})|json_encode }}.replace(/0$/i, this.value);">
+        <option value="1">{{ 'datasets'|trans }}</option>
+        {% for pageCandidate in 1..availablePages %}
+          <option value="{{ pageCandidate }}"{% if page == pageCandidate %} selected{% endif %}>{{ (pageCandidate - 1) * entitiesPerPage + 1 }} - {{ min(totalEntityCount, (pageCandidate) * entitiesPerPage) }}</option>
+        {% endfor %}
+        <option value="0"{% if page == 0 %} selected{% endif %}>{{ 'all'|trans }}</option>
+      </select>
+    </div>
+  {% endset %}
+  {% if filterForm is not null %}
+    {{ form_start(filterForm, {attr: {class: 'tl_form'}}) }}
+    <div class="tl_formbody">
+      {% set filters = filterForm.children|keys|filter(k => k not in ['REQUEST_TOKEN', '_token', 'search', 'orderBy', 'page']) %}
+      {% if filters|length %}
+        <div class="tl_panel cf">
+          <div class="tl_filter tl_subpanel">
+            <strong>{{ 'do.filter'|trans }}</strong>
+            {% for filter in filters %}
+              {{ form_widget(filterForm[filter], {attr: {class: 'tl_select'}}) }}
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+      <div class="tl_panel cf">
+        <div class="tl_submit_panel tl_subpanel">
+          <button id="filter" class="tl_img_submit filter_apply" title="{{ 'apply'|trans }}">{{ 'apply'|trans }}</button>
+          <button name="filter-reset" id="filter_reset" value="reset" class="tl_img_submit filter_reset" title="{{ 'reset'|trans }}">{{ 'reset'|trans }}</button>
+        </div>
+        {% if totalEntityCount > 0 %}
+          {{ limitSubpanel }}
+        {% endif %}
+        {% if 'search' in filterForm.children|keys %}
+          <div class="tl_search tl_subpanel">
+            <strong>
+              {{ form_label(filterForm.search) }}
+            </strong>
+            {{ form_widget(filterForm.search, {attr: {class: 'tl_text', style: 'width:68%;'}}) }}
+          </div>
+        {% endif %}
+        {% if 'orderBy' in filterForm.children|keys %}
+          <div class="tl_sorting tl_subpanel">
+            <strong>
+              {{ form_label(filterForm.orderBy) }}
+            </strong>
+            {{ form_widget(filterForm.orderBy, {attr: {class: 'tl_select'}}) }}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+    {{ form_end(filterForm) }}
+  {% elseif totalEntityCount > 0 %}
+    <div class="tl_panel cf">
+      {{ limitSubpanel }}
+    </div>
+  {% endif %}
+  {% if canCreate or block('actions', listTemplate) is defined %}
+    <div id="tl_buttons">
+      {% if canCreate %}
+        <a href="{{ path(baseRoute ~ '-create') }}" class="header_new" accesskey="n" title="{{ 'new'|trans }}" onclick="Backend.getScrollOffset()">{{ 'new'|trans }}</a>
+      {% endif %}
+      {% if block('actions', listTemplate) is defined %}
+        {{ block('actions', listTemplate) }}
+      {% endif %}
+    </div>
+  {% endif %}
+  {% if entities|length > 0 %}
+    {% set actions = canEdit or canDelete or block('additionalEntryActions', listTemplate) is defined %}
+    <div class="tl_listing_container list_view" id="tl_listing">
+      <table class="tl_listing showColumns">
+        <tbody>
+        <tr>
+          {{ block('header', listTemplate) }}
+          {% if actions %}
+            <th class="tl_folder_tlist tl_right_nowrap"></th>
+          {% endif %}
+        </tr>
+        {% for entity in entities %}
+          <tr class="even click2edit toggle_select hover-row">
+            {{ block('entry', listTemplate) }}
+            {% if actions %}
+              <td class="tl_file_list tl_right_nowrap">
+                {% if block('additionalEntryActions', listTemplate) is defined %}
+                  {{ block('additionalEntryActions', listTemplate) }}
+                {% endif %}
+                {% if canEdit %}
+                  <a href="{{ path(baseRoute ~ '-edit', {id: entity.id}) }}" title="" class="edit"><img src="{{ asset('system/themes/flexible/icons/edit.svg') }}" width="16" height="16" alt="{{ 'edit_element'|trans({__id__: entity.id}) }}"></a>
+                {% endif %}
+                {# <a href="{{ path(baseRoute ~ '-duplicate') }}" title="" class="copy"><img src="{{ asset('system/themes/flexible/icons/copy.svg') }}" width="16" height="16" alt="{{ 'duplicate_element'|trans({__id__: entity.id}) }}"></a> #}
+                {% if canDelete %}
+                  <a href="{{ path(baseRoute ~ '-delete', {id: entity.id}) }}" title="" class="delete" onclick="return confirm('{{ 'delete_confirm'|trans({__id__: entity.id}) }}')"><img src="{{ asset('system/themes/flexible/icons/delete.svg') }}" width="16" height="16" alt="{{ 'delete_element'|trans({__id__: entity.id}) }}"></a>
+                {% endif %}
+              </td>
+            {% endif %}
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="tl_empty">{{ 'no_entries_found'|trans }}</p>
+  {% endif %}
+{% endblock %}

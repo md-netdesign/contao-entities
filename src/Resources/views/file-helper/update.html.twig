@@ -1,0 +1,13 @@
+<ul id="{{ id }}_output" class="gallery" data-value="{{ uuid|default('') }}">
+  {% if file %}
+    <li>
+      {% if file.extension in ['jpg', 'jpeg', 'png', 'svg', 'webp'] %}
+        {% include '@ContaoCore/Image/Studio/figure.html.twig' with {figure: createContaoImageStudioFigureBuilder(file)
+          .setSize([100, 70, 'crop'])
+          .build()} %}
+      {% else %}
+        {{ file.name }}
+      {% endif %}
+    </li>
+  {% endif %}
+</ul>

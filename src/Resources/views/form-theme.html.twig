@@ -1,0 +1,381 @@
+{% use 'form_div_layout.html.twig' %}
+
+{% block form_row %}
+  {% set widget_attr = {} %}
+  {% if help is not empty %}
+    {% set widget_attr = {attr: {'aria-describedby': id ~"_help"}} %}
+  {% endif %}
+  {% set row_attr = row_attr|merge({class: (row_attr.class|default('') ~ ' widget')|trim}) %}
+  <div{% with {attr: row_attr} %}{{ block('attributes') }}{% endwith %}>
+    {% if label is not same as(false) and 'checkbox' not in form.vars.block_prefixes %}
+      <h3>{{ form_label(form) }}</h3>
+    {% endif %}
+    {{ form_errors(form) }}
+    {{ form_widget(form, widget_attr) }}
+    {{ form_help(form) }}
+  </div>
+{% endblock form_row %}
+
+{% block form_help %}
+  {% if help is not empty %}
+    {% set help_attr = help_attr|merge({class: (help_attr.class|default('') ~ ' help-text tl_help tl_tip')|trim}) %}
+    <p id="{{ id }}_help"{% with { attr: help_attr } %}{{ block('attributes') }}{% endwith %}>
+      {% if translation_domain is same as(false) %}
+        {% if help_html is same as(false) %}
+          {{ help }}
+        {% else %}
+          {{ help|raw }}
+        {% endif %}
+      {% else %}
+        {% if help_html is same as(false) %}
+          {{ help|trans(help_translation_parameters, translation_domain) }}
+        {% else -%}
+          {{ help|trans(help_translation_parameters, translation_domain)|raw }}
+        {% endif %}
+      {% endif %}
+    </p>
+  {% endif %}
+{% endblock form_help %}
+
+{% block form_widget_compound %}
+  {% set attr = attr|merge({style: 'margin:0 -15px;'}) %}
+  <div {{ block('widget_container_attributes') }}>
+    {% if form is rootform %}
+      {{ form_errors(form) }}
+    {% endif %}
+    {{ block('form_rows') }}
+    {{ form_rest(form) }}
+    <div class="clr"></div>
+  </div>
+{% endblock %}
+
+{% block money_widget %}
+  {% set prepend = not (money_pattern starts with '{{') %}
+  {% set append = not (money_pattern ends with '}}') %}
+  {% if prepend or append %}
+    <div class="input-group{{ group_class|default('') }}" style="display:flex;align-items:center;">
+      {% if prepend %}
+        <span class="input-group-text" style="margin-right:5px;">{{ money_pattern|form_encode_currency }}</span>
+      {% endif %}
+      {{ block('form_widget_simple') }}
+      {% if append %}
+        <span class="input-group-text" style="margin-left:5px;">{{ money_pattern|form_encode_currency }}</span>
+      {% endif %}
+    </div>
+  {% else %}
+    {{ block('form_widget_simple') }}
+  {% endif %}
+{% endblock %}
+
+{% block form_widget_simple %}
+  {% set attr = attr|merge({class: (attr.class|default('') ~ ' tl_text')|trim}) %}
+  {{ parent() }}
+{% endblock form_widget_simple %}
+
+{% block textarea_widget %}
+  {% set attr = attr|merge({class: (attr.class|default('') ~ ' tl_textarea')|trim}) %}
+  {{ parent() }}
+{% endblock textarea_widget %}
+
+{% block choice_widget_collapsed %}
+  {% set attr = attr|merge({class: (attr.class|default('') ~ ' tl_select')|trim}) %}
+  {{ parent() }}
+  {% if not expanded and multiple %}
+    <script>
+      (function init_{{ id }}() {
+        let $chosen = document.querySelector('#{{ id }}_chzn');
+        if ($chosen) {
+          $chosen.style.height = 'auto';
+        } else
+          requestAnimationFrame(init_{{ id }});
+      })();
+    </script>
+  {% endif %}
+{% endblock choice_widget_collapsed %}
+
+{% block checkbox_widget %}
+  {% set attr = attr|merge({class: (attr.class|default('') ~ ' tl_checkbox')|trim}) %}
+  {% set noMarginTop = 'checkbox-no-margin-top' in row_attr.class|default('') %}
+  <div class="tl_checkbox_single_container"{% if noMarginTop %} style="margin-top:3px;"{% endif %}>
+    {{ parent() }} {{ form_label(form) }}
+  </div>
+{% endblock checkbox_widget %}
+
+{% block button_widget %}
+  {% set attr = attr|merge({class: (attr.class|default('') ~ ' tl_submit')|trim}) %}
+  <div class="tl_submit_container">
+    {{ parent() }}
+  </div>
+{% endblock %}
+
+{% block form_label %}
+  {% if label is not same as(false) %}
+    {% if not compound %}
+      {% set label_attr = label_attr|merge({'for': id}) %}
+    {% endif %}
+    {% if required %}
+      {% set label_attr = label_attr|merge({'class': (label_attr.class|default('') ~ ' required')|trim}) %}
+    {% endif %}
+    {% if label is empty %}
+      {% if label_format is not empty %}
+        {% set label = label_format|replace({
+          '%name%': name,
+          '%id%': id,
+        }) %}
+      {% else %}
+        {% set label = name|humanize %}
+      {% endif %}
+    {% endif %}
+    <{{ element|default('label') }}{% if label_attr %}{% with { attr: label_attr } %}{{ block('attributes') }}{% endwith %}{% endif %}>
+    {% if form.vars.required ?? false %}
+      <span class="invisible">{{ 'MSC.mandatory'|trans({}, 'contao_default') }} </span>
+    {% endif %}
+    {% if translation_domain is same as(false) %}
+      {{ label }}
+    {% else %}
+      {{ label|trans({}, translation_domain) }}
+    {% endif %}
+    {% if form.vars.required ?? false %}<span class="mandatory">*</span>{% endif %}
+    </{{ element|default('label') }}>
+  {% endif %}
+{% endblock form_label %}
+
+{% block form_start %}
+  {% set attr = attr|merge({class: (attr.class|default('') ~ ' tl_form tl_edit_form')|trim}) %}
+  {{ parent() }}
+{% endblock form_start %}
+
+{% block form_end %}
+  {{ parent() }}
+{% endblock form_end %}
+
+{% block form_errors %}
+  {% if errors|length > 0 %}
+    <ul class="tl_error">
+      {% for error in errors %}
+        <li>{{ error.message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endblock form_errors %}
+
+{% block collection_widget %}
+  {% if allow_add %}{% set attr = attr|merge({'data-allow-add': 'true'}) %}{% endif %}
+  {% if allow_delete %}{% set attr = attr|merge({'data-allow-remove': 'true', 'data-remove-confirm': 'delete_entry'|trans}) %}{% endif %}
+  {% set attr = attr|merge({class: (attr.class|default('') ~ ' collection-widget')|trim}) %}
+  {{ parent() }}
+  <script>
+    (function () {
+      if (document.querySelector('style#collection-widget') === null) {
+        const $style = document.createElement('style');
+        $style.id = 'collection-widget';
+        $style.innerText = '.collection-widget>div:hover{background-color:rgba(0,0,0,.04);}';
+        document.head.append($style);
+      }
+
+      const $container = document.querySelector({{ ('#' ~ id)|json_encode|raw }});
+      if ($container === null)
+        return;
+
+      let allowAdd = $container.dataset.allowAdd === 'true';
+      let allowRemove = $container.dataset.allowRemove === 'true';
+
+      let index = 0;
+
+      const swapRows = ($a, $b, toTop) => {
+        if ($a.parentElement !== $b.parentElement)
+          return console.warn('Parent element not matching.');
+
+        let $aControls = $a.querySelectorAll('input, select'),
+          $bControls = $b.querySelectorAll('input, select');
+        if ($aControls.length !== $bControls.length)
+          return console.warn('Control count does not match.');
+
+        for (let i = 0; i < $aControls.length; i++) {
+          let $aControl = $aControls.item(i),
+            $bControl = $bControls.item(i);
+          if (!$aControl.name)
+            continue;
+
+          if ($aControl.tagName === 'SELECT') {
+            let tmp = $aControl.value;
+            $aControl.value = $bControl.value;
+            $bControl.value = tmp;
+            if ($aControl.classList.contains('tl_chosen')) {
+              $$(`select.tl_chosen[name="${$aControl.name}"]`).fireEvent('liszt:updated').fireEvent('change');
+              $$(`select.tl_chosen[name="${$bControl.name}"]`).fireEvent('liszt:updated').fireEvent('change');
+            }
+          } else if ($aControl.type === 'radio' || $aControl.type === 'checkbox') {
+            let tmp = $aControl.checked;
+            $aControl.checked = $bControl.checked;
+            $bControl.checked = tmp;
+          } else {
+            let tmp = $aControl.value;
+            $aControl.value = $bControl.value;
+            $bControl.value = tmp;
+          }
+        }
+
+        if (toTop && $b.previousElementSibling)
+          swapRows($b, $b.previousElementSibling, toTop);
+
+        document.dispatchEvent(new Event('sf-form-collection-updated'));
+      };
+
+      const addRow = ($after) => {
+        let html = $container.dataset.prototype
+          .replace(/__name__label__/g, '')
+          .replace(/__name__/g, `new-${index}`);
+
+        if ($after)
+          $after.insertAdjacentHTML('afterend', html);
+        else
+          $container.querySelector(':scope > .clr')
+            .insertAdjacentHTML('beforebegin', html);
+
+        index++;
+        addButtons();
+        $$('select.tl_chosen:not([style])').chosen();
+
+        document.dispatchEvent(new Event('sf-form-collection-updated'));
+      }
+
+      const addButtons = () => {
+        $container.querySelectorAll(':scope > div:not(.clr)')
+          .forEach(($row, index, $all) => {
+            if (!$container.classList.contains('not-sortable')) {
+              let $orderUp = $row.querySelector(':scope > button.order-up');
+              if ($orderUp === null) {
+                $orderUp = document.createElement('button');
+                $orderUp.type = 'button';
+                $orderUp.innerText = '▲';
+                $orderUp.classList.add('order-up', 'tl_submit');
+                $orderUp.style.display = 'block';
+                $orderUp.style.margin = '0 0 0 15px';
+                $orderUp.style.flex = '0 0 auto';
+                $orderUp.style.alignSelf = 'center';
+                $orderUp.style.borderTopRightRadius = '0';
+                $orderUp.style.borderBottomRightRadius = '0';
+                $orderUp.style.borderRightWidth = '0';
+
+                $row.append($orderUp);
+
+                $orderUp.addEventListener('click', e => !$orderUp.disabled && swapRows($row, $row.previousElementSibling, e.ctrlKey))
+              }
+              $orderUp.disabled = index === 0;
+
+              let $orderDown = $row.querySelector(':scope > button.order-down');
+              if ($orderDown === null) {
+                $orderDown = document.createElement('button');
+                $orderDown.type = 'button';
+                $orderDown.innerText = '▼';
+                $orderDown.classList.add('order-down', 'tl_submit');
+                $orderDown.style.display = 'block';
+                $orderDown.style.margin = '0';
+                $orderDown.style.flex = '0 0 auto';
+                $orderDown.style.alignSelf = 'center';
+                $orderDown.style.borderTopLeftRadius = '0';
+                $orderDown.style.borderBottomLeftRadius = '0';
+                $orderDown.style.borderLeftWidth = '0';
+
+                $row.append($orderDown);
+
+                $orderDown.addEventListener('click', () => !$orderDown.disabled && swapRows($row, $row.nextElementSibling))
+              }
+              $orderDown.disabled = index === $all.length - 1;
+            }
+
+            if (allowRemove) {
+              let $remove = $row.querySelector(':scope > button.remove');
+              if ($remove === null) {
+                $remove = document.createElement('button');
+                $remove.type = 'button';
+                $remove.innerText = '×';
+                $remove.classList.add('remove', 'tl_submit');
+                $remove.style.display = 'block';
+                $remove.style.margin = '0 0 0 15px';
+                $remove.style.flex = '0 0 auto';
+                $remove.style.alignSelf = 'center';
+
+                $row.append($remove);
+
+                $remove.addEventListener('click', () => {
+                  if (confirm($container.dataset.removeConfirm)) {
+                    $remove.parentElement.remove();
+                    addButtons();
+
+                    document.dispatchEvent(new Event('sf-form-collection-updated'));
+                  }
+                });
+
+                $row.querySelector(':scope > div')
+                  .style.flex = '1';
+                $row.style.display = 'flex';
+              }
+            }
+          });
+      };
+
+      if (allowAdd) {
+        let $add = document.createElement('button');
+        $add.type = 'button';
+        $add.innerText = '+';
+        $add.classList.add('tl_submit');
+        $add.style.display = 'block';
+        $add.style.margin = '10px auto 0 auto';
+
+        $container.append($add);
+
+        $add.addEventListener('click', () => addRow());
+      }
+
+      addButtons();
+    })();
+  </script>
+{% endblock %}
+
+{% block contao_file_widget %}
+  {% with {type: 'hidden'} %}
+    {{ block('form_widget_simple') }}
+  {% endwith %}
+  <div class="selector_container">
+    {% include '@ContaoEntities/file-helper/update.html.twig' %}
+    <p>
+      <a href="{{ path('contao_backend_picker', {
+        context: 'file',
+        extras: {
+          fieldType: 'radio',
+          filesOnly: 1,
+          extensions: extensions|default('jpg')
+        }
+      }) }}" class="tl_submit" id="{{ id }}_btn">{{ 'change_selection'|trans }}</a>
+    </p>
+    <script>
+      (function () {
+        let $link = document.querySelector('#{{ id }}_btn'),
+          $input = document.querySelector('#{{ id }}'),
+          $output = document.querySelector('#{{ id }}_output'),
+          domParser = new DOMParser();
+        $link && $link.addEventListener('click', e => {
+          e.preventDefault();
+
+          Backend.openModalSelector({
+            'id': 'tl_listing',
+            'title': {{ label|trans|json_encode|raw }},
+            'url': $link.href + '&value=' + $input.value,
+            'callback': async function (table, value) {
+              let response = await fetch('{{ path('file-helper-update', {path: '__path__', id: id})|escape('js') }}'.replace('__path__', encodeURIComponent(value.join('\t'))), { credentials: 'include' });
+              let html = await response.text();
+              let fragment = domParser.parseFromString(html, 'text/html');
+
+              let $newOutput = fragment.body.querySelector('#{{ id }}_output');
+              $input.value = $newOutput.dataset.value;
+              $output.replaceWith($newOutput);
+              $output = $newOutput;
+            }
+          });
+        });
+      })();
+    </script>
+  </div>
+{% endblock %}
