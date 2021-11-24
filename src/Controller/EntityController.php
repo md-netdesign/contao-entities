@@ -153,31 +153,6 @@ class EntityController extends AbstractController
       "listTemplate" => $this->listTemplate]));
   }
 
-  protected function checkAuthentication(Security $security): bool {
-    /** @var BackendUser $user */
-    $user = $security->getUser();
-
-    if (!($user instanceof BackendUser))
-      throw new AccessDeniedHttpException("Not authenticated in backend.");
-
-    if ($this->module !== null)
-      if (!in_array($this->module, $user->modules) && !$user->admin)
-        throw new AccessDeniedHttpException("No access for module.");
-
-    return $user->admin;
-  }
-
-  private function getRenderParameters(array $source = []): array {
-    return array_merge($source, [
-      "baseRoute" => $this->baseRoute,
-      "title" => $this->title,
-      "instanceTitle" => $this->instanceTitle,
-      "canCreate" => !$this->createDisabled,
-      "canEdit" => !$this->editDisabled,
-      "canDuplicate" => !$this->duplicateDisabled,
-      "canDelete" => !$this->deleteDisabled]);
-  }
-
   #[Route("/delete/{id}", name: "-delete", requirements: ["id" => "\d+"], methods: ["GET"])]
   public function delete(Security $security, EntityManagerInterface $entityManager, int $id): Response {
     $this->checkAuthentication($security);
@@ -232,6 +207,31 @@ class EntityController extends AbstractController
       "entity" => $instance,
       "fieldsets" => $fieldsets
     ]));
+  }
+
+  protected function checkAuthentication(Security $security): bool {
+    /** @var BackendUser $user */
+    $user = $security->getUser();
+
+    if (!($user instanceof BackendUser))
+      throw new AccessDeniedHttpException("Not authenticated in backend.");
+
+    if ($this->module !== null)
+      if (!in_array($this->module, $user->modules) && !$user->admin)
+        throw new AccessDeniedHttpException("No access for module.");
+
+    return $user->admin;
+  }
+
+  protected function getRenderParameters(array $source = []): array {
+    return array_merge($source, [
+      "baseRoute" => $this->baseRoute,
+      "title" => $this->title,
+      "instanceTitle" => $this->instanceTitle,
+      "canCreate" => !$this->createDisabled,
+      "canEdit" => !$this->editDisabled,
+      "canDuplicate" => !$this->duplicateDisabled,
+      "canDelete" => !$this->deleteDisabled]);
   }
 
 }
