@@ -15,8 +15,13 @@
       <a href="{{ path(baseRoute ~ '-list') }}" class="header_back" accesskey="b" title="{{ 'back'|trans }}" onclick="Backend.getScrollOffset()">{{ 'back'|trans }}</a>
     {% endblock %}
   </div>
+
+  {% block beforeBeginForm %}{% endblock %}
+
   {% form_theme form contaoEntitiesFormTheme|default('@ContaoEntities/form-theme.html.twig') %}
   {{ form_start(form) }}
+
+  {% block afterBeginForm %}{% endblock %}
 
   <div class="tl_formbody_edit">
 
@@ -34,6 +39,8 @@
 
   </div>
 
+  {% block beforeSubmit %}{% endblock %}
+
   <div class="tl_formbody_submit">
     <div class="tl_submit_container">
       {% block submit %}
@@ -43,5 +50,9 @@
     </div>
   </div>
 
+  {% block beforeEndForm %}{% endblock %}
+
   {{ form_end(form) }}
+
+  {% block afterEndForm %}{% endblock %}
 {% endblock %}
