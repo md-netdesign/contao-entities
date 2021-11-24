@@ -25,18 +25,18 @@ use Symfony\Component\Security\Core\Security;
 class EntityController extends AbstractController
 {
 
-  private EntityRepository $entityRepository;
-  private ?string $module = null;
-  private string $baseRoute;
-  private string $title;
-  private ?string $instanceTitle = null;
-  private string $dataClass;
-  private int $entitiesPerPage = 100;
-  private string $listTemplate = "@ContaoEntities/default.html.twig";
-  private bool $createDisabled = false;
-  private bool $editDisabled = false;
-  private bool $duplicateDisabled = false;
-  private bool $deleteDisabled = false;
+  protected EntityRepository $entityRepository;
+  protected ?string $module = null;
+  protected string $baseRoute;
+  protected string $title;
+  protected ?string $instanceTitle = null;
+  protected string $dataClass;
+  protected int $entitiesPerPage = 100;
+  protected string $listTemplate = "@ContaoEntities/default.html.twig";
+  protected bool $createDisabled = false;
+  protected bool $editDisabled = false;
+  protected bool $duplicateDisabled = false;
+  protected bool $deleteDisabled = false;
 
   public function setEntityRepository(EntityRepository $entityRepository): EntityController {
     $this->entityRepository = $entityRepository;
@@ -153,6 +153,31 @@ class EntityController extends AbstractController
       "listTemplate" => $this->listTemplate]));
   }
 
+  protected function checkAuthentication(Security $security): bool {
+    /** @var BackendUser $user */
+    $user = $security->getUser();
+
+    if (!($user instanceof BackendUser))
+      throw new AccessDeniedHttpException("Not authenticated in backend.");
+
+    if ($this->module !== null)
+      if (!in_array($this->module, $user->modules) && !$user->admin)
+        throw new AccessDeniedHttpException("No access for module.");
+
+    return $user->admin;
+  }
+
+  protected function getRenderParameters(array $source = []): array {
+    return array_merge($source, [
+      "baseRoute" => $this->baseRoute,
+      "title" => $this->title,
+      "instanceTitle" => $this->instanceTitle,
+      "canCreate" => !$this->createDisabled,
+      "canEdit" => !$this->editDisabled,
+      "canDuplicate" => !$this->duplicateDisabled,
+      "canDelete" => !$this->deleteDisabled]);
+  }
+
   #[Route("/delete/{id}", name: "-delete", requirements: ["id" => "\d+"], methods: ["GET"])]
   public function delete(Security $security, EntityManagerInterface $entityManager, int $id): Response {
     $this->checkAuthentication($security);
@@ -207,31 +232,6 @@ class EntityController extends AbstractController
       "entity" => $instance,
       "fieldsets" => $fieldsets
     ]));
-  }
-
-  protected function checkAuthentication(Security $security): bool {
-    /** @var BackendUser $user */
-    $user = $security->getUser();
-
-    if (!($user instanceof BackendUser))
-      throw new AccessDeniedHttpException("Not authenticated in backend.");
-
-    if ($this->module !== null)
-      if (!in_array($this->module, $user->modules) && !$user->admin)
-        throw new AccessDeniedHttpException("No access for module.");
-
-    return $user->admin;
-  }
-
-  protected function getRenderParameters(array $source = []): array {
-    return array_merge($source, [
-      "baseRoute" => $this->baseRoute,
-      "title" => $this->title,
-      "instanceTitle" => $this->instanceTitle,
-      "canCreate" => !$this->createDisabled,
-      "canEdit" => !$this->editDisabled,
-      "canDuplicate" => !$this->duplicateDisabled,
-      "canDelete" => !$this->deleteDisabled]);
   }
 
 }
