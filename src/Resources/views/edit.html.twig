@@ -11,7 +11,9 @@
 
 {% block main %}
   <div id="tl_buttons">
-    <a href="{{ path(baseRoute ~ '-list') }}" class="header_back" accesskey="b" title="{{ 'back'|trans }}" onclick="Backend.getScrollOffset()">{{ 'back'|trans }}</a>
+    {% block actions %}
+      <a href="{{ path(baseRoute ~ '-list') }}" class="header_back" accesskey="b" title="{{ 'back'|trans }}" onclick="Backend.getScrollOffset()">{{ 'back'|trans }}</a>
+    {% endblock %}
   </div>
   {% form_theme form contaoEntitiesFormTheme|default('@ContaoEntities/form-theme.html.twig') %}
   {{ form_start(form) }}
@@ -34,8 +36,10 @@
 
   <div class="tl_formbody_submit">
     <div class="tl_submit_container">
-      <button type="submit" name="save" id="save" class="tl_submit" accesskey="s">{{ 'save'|trans }}</button>
-      <button type="submit" name="save" value="close" id="saveNclose" class="tl_submit" accesskey="c">{{ 'save_and_close'|trans }}</button>
+      {% block submit %}
+        <button type="submit" name="save" id="save" class="tl_submit" accesskey="s">{{ 'save'|trans }}</button>
+        <button type="submit" name="save" value="close" id="saveNclose" class="tl_submit" accesskey="c">{{ 'save_and_close'|trans }}</button>
+      {% endblock %}
     </div>
   </div>
 
