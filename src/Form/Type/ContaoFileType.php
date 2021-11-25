@@ -18,6 +18,9 @@ class ContaoFileType extends AbstractType
   public function configureOptions(OptionsResolver $resolver) {
     $resolver->setDefault("extensions", "jpg,jpeg,png,svg,webp");
     $resolver->setAllowedTypes("extensions", "string");
+
+    $resolver->setDefault("filesOnly", true);
+    $resolver->setAllowedTypes("filesOnly", "bool");
   }
 
   public function buildForm(FormBuilderInterface $builder, array $options) {
@@ -40,6 +43,7 @@ class ContaoFileType extends AbstractType
     parent::buildView($view, $form, $options);
     $view->vars["extensions"] = $options["extensions"];
     $view->vars["file"] = FilesModel::findByUuid(StringUtil::uuidToBin($view->vars["value"]));
+    $view->vars["filesOnly"] = $options["filesOnly"];
   }
 
   public function getParent(): string {

@@ -345,7 +345,7 @@
         context: 'file',
         extras: {
           fieldType: 'radio',
-          filesOnly: 1,
+          filesOnly: filesOnly ? 1 : 0,
           extensions: extensions|default('jpg')
         }
       }) }}" class="tl_submit" id="{{ id }}_btn">{{ 'change_selection'|trans }}</a>
