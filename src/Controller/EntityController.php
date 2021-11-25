@@ -11,6 +11,7 @@ use MdNetdesign\ContaoEntities\Data\Entity\Repository\FilterableRepository;
 use MdNetdesign\ContaoEntities\Data\Entity\Repository\FilterRepository;
 use MdNetdesign\ContaoEntities\Data\Form\Group;
 use MdNetdesign\ContaoEntities\Form\Type\RequestTokenType;
+use MdNetdesign\ContaoEntities\Services\CloneHelper;
 use MdNetdesign\Form\AutoType;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormFactoryInterface;
@@ -104,7 +105,7 @@ class EntityController extends AbstractController
     $this->checkAuthentication($security);
 
     if ($page < 0)
-      return $this->redirectToRoute($this->baseRoute."-list");
+      return $this->redirectToRoute("$this->baseRoute-list");
 
     $queryBuilder = $this->entityRepository->createQueryBuilder("entity");
 
@@ -113,10 +114,10 @@ class EntityController extends AbstractController
 
     if ($this->entityRepository instanceof FilterableRepository) {
       if ($request->request->get("filter-reset") === "reset")
-        return $this->redirectToRoute($this->baseRoute."-list");
+        return $this->redirectToRoute("$this->baseRoute-list");
 
       $filterForm = $formFactory->createNamed("filter", $this->entityRepository->getFilterType(), null, [
-        "action" => $this->generateUrl($this->baseRoute."-list")])
+        "action" => $this->generateUrl("$this->baseRoute-list")])
         ->add(RequestTokenType::NAME, RequestTokenType::class);
 
       $filterForm->handleRequest($request);
@@ -188,25 +189,41 @@ class EntityController extends AbstractController
     $entityManager->remove($instance);
     $entityManager->flush();
 
-    return $this->redirectToRoute($this->baseRoute."-list");
+    return $this->redirectToRoute("$this->baseRoute-list");
   }
 
   #[Route("/create", name: "-create", methods: ["GET", "POST"])]
   #[Route("/edit/{id}", name: "-edit", requirements: ["id" => "\d+"], methods: ["GET", "POST"])]
+  #[Route("/duplicate/{id}", name: "-duplicate", requirements: ["id" => "\d+"], defaults: ["duplicate" => true], methods: ["GET", "POST"])]
   public function edit(Request $request, Security $security, FormFactoryInterface $formFactory, EntityManagerInterface $entityManager, bool $duplicate = false, ?int $id = null): Response {
     $isUserAdmin = $this->checkAuthentication($security);
 
-    if ($id === null)
+    if ($id === null) {
+      if ($this->createDisabled)
+        throw new NotFoundHttpException();
+
       $instance = null;
-    elseif (($instance = $this->entityRepository->find($id)) === null)
+    } elseif (($instance = $this->entityRepository->find($id)) === null)
+      throw new NotFoundHttpException();
+
+    if ($instance !== null && $duplicate) {
+      if ($this->duplicateDisabled)
+        throw new NotFoundHttpException();
+
+      $instance = clone $instance;
+    }
+
+    if ($this->editDisabled)
       throw new NotFoundHttpException();
 
     $form = $formFactory->createNamed("entity", AutoType::class, $instance, [
       "data_class" => $this->dataClass,
       "groups" => $isUserAdmin ? [Group::CONTAO, Group::CONTAO_ADMIN] : [Group::CONTAO],
       "action" => $id === null ?
-        $this->generateUrl($this->baseRoute."-create") :
-        $this->generateUrl($this->baseRoute."-edit", ["id" => $id])])
+        $this->generateUrl("$this->baseRoute-create") :
+        ($duplicate ?
+          $this->generateUrl("$this->baseRoute-duplicate", ["id" => $id]) :
+          $this->generateUrl("$this->baseRoute-edit", ["id" => $id]))])
       ->add(RequestTokenType::NAME, RequestTokenType::class);
 
     $form->handleRequest($request);
@@ -218,8 +235,8 @@ class EntityController extends AbstractController
         $entityManager->flush();
 
         return match ($request->request->get("save")) {
-          "close" => $this->redirectToRoute($this->baseRoute."-list"),
-          default => $this->redirectToRoute($this->baseRoute."-edit", ["id" => $instance->getId()])
+          "close" => $this->redirectToRoute("$this->baseRoute-list"),
+          default => $this->redirectToRoute("$this->baseRoute-edit", ["id" => $instance->getId()])
         };
       } elseif ($instance !== null && $entityManager->contains($instance))
         $entityManager->refresh($instance);
