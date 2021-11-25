@@ -42,7 +42,7 @@ class ContaoFileType extends AbstractType
   }
 
   private function reverseTransform($value, bool $multiple): FilesModel|array|null {
-    if ($value === null)
+    if ($value === null || trim($value) === "")
       return null;
 
     $value = explode(",", $value);
