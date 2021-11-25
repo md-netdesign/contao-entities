@@ -4,8 +4,7 @@
 
 ## Config
 
-You'll have to add the following minimal configuration after installing this bundle to use
-it.
+You'll have to add the following minimal configuration after installing this bundle to use it.
 
 ### `config/config.yml`
 
@@ -25,6 +24,7 @@ doctrine:
   dbal:
     types:
       contao_file: MdNetdesign\ContaoEntities\Data\Entity\Type\ContaoFileType
+      contao_files: MdNetdesign\ContaoEntities\Data\Entity\Type\ContaoFilesType
 ```
 
 ```yaml

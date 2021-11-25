@@ -1,5 +1,5 @@
-<ul id="{{ id }}_output" class="gallery" data-value="{{ uuid|default('') }}">
-  {% if file %}
+<ul id="{{ id }}_output" class="gallery" data-value="{{ uuids|join(',')|default('') }}">
+  {% for file in files is null ? [] : (files is iterable ? files : [files]) %}
     <li>
       {% if file.extension in ['jpg', 'jpeg', 'png', 'svg', 'webp'] %}
         {% include '@ContaoCore/Image/Studio/figure.html.twig' with {figure: createContaoImageStudioFigureBuilder(file)
@@ -9,5 +9,5 @@
         {{ file.name }}
       {% endif %}
     </li>
-  {% endif %}
+  {% endfor %}
 </ul>

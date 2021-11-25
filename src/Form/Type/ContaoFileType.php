@@ -21,29 +21,48 @@ class ContaoFileType extends AbstractType
 
     $resolver->setDefault("filesOnly", true);
     $resolver->setAllowedTypes("filesOnly", "bool");
+
+    $resolver->setDefault("filesOnly", true);
+    $resolver->setAllowedTypes("filesOnly", "bool");
+
+    $resolver->setDefault("fieldType", "radio");
+    $resolver->setAllowedValues("fieldType", ["radio", "checkbox"]);
   }
 
   public function buildForm(FormBuilderInterface $builder, array $options) {
-    $builder->addModelTransformer(new CallbackTransformer(function (FilesModel|null $value) use ($options) {
+    $builder->addModelTransformer(new CallbackTransformer(function (FilesModel|array|null $value) use ($options) {
       if ($value === null)
         return null;
 
-      $options["file"] = $value;
+      if (is_array($value))
+        return join(",", array_map(fn($entry) => StringUtil::binToUuid($entry->uuid), $value));
 
       return StringUtil::binToUuid($value->uuid);
-    }, function ($value) {
-      if ($value === null)
-        return null;
+    }, fn($value) => $this->reverseTransform($value)));
+  }
 
-      return FilesModel::findByUuid(StringUtil::uuidToBin($value));
-    }));
+  private function reverseTransform($value): FilesModel|array|null {
+    if ($value === null)
+      return null;
+
+    $value = explode(",", $value);
+
+    if (($sizeOfValue = sizeof($value)) === 0)
+      return null;
+
+    if ($sizeOfValue > 1)
+      return array_map(fn($entry) => FilesModel::findByUuid(StringUtil::uuidToBin($entry)), $value);
+
+    return FilesModel::findByUuid(StringUtil::uuidToBin(reset($value)));
   }
 
   public function buildView(FormView $view, FormInterface $form, array $options) {
     parent::buildView($view, $form, $options);
     $view->vars["extensions"] = $options["extensions"];
-    $view->vars["file"] = FilesModel::findByUuid(StringUtil::uuidToBin($view->vars["value"]));
     $view->vars["filesOnly"] = $options["filesOnly"];
+    $view->vars["fieldType"] = $options["fieldType"];
+    $view->vars["files"] = $files = $this->reverseTransform($view->vars["value"]);
+    $view->vars["uuids"] = $files === null ? [] : array_values(array_map(fn($file) => StringUtil::binToUuid($file->uuid), is_array($files) ? $files : [$files]));
   }
 
   public function getParent(): string {

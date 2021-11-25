@@ -344,7 +344,7 @@
       <a href="{{ path('contao_backend_picker', {
         context: 'file',
         extras: {
-          fieldType: 'radio',
+          fieldType: fieldType,
           filesOnly: filesOnly ? 1 : 0,
           extensions: extensions|default('jpg')
         }
