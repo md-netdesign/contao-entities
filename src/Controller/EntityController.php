@@ -240,15 +240,14 @@ class EntityController extends AbstractController
     } elseif (($instance = $this->entityRepository->find($id)) === null)
       throw new NotFoundHttpException();
 
-    if ($instance !== null && $duplicate) {
-      if ($this->duplicateDisabled)
+    if ($instance !== null)
+      if ($duplicate) {
+        if ($this->duplicateDisabled)
+          throw new NotFoundHttpException();
+
+        $instance = clone $instance;
+      } elseif ($this->editDisabled)
         throw new NotFoundHttpException();
-
-      $instance = clone $instance;
-    }
-
-    if ($this->editDisabled)
-      throw new NotFoundHttpException();
 
     $form = $formFactory->createNamed("entity", AutoType::class, $instance, [
       "data_class" => $this->dataClass,
