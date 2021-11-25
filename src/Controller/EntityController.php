@@ -155,7 +155,7 @@ class EntityController extends AbstractController
     $entities = $queryBuilder->getQuery()->getResult();
 
     $selectForm = null;
-    if ($editMode === "multiple") {
+    if ($editMode === "multiple" && sizeof($entities) > 0) {
       $selectForm = $formFactory->createNamed("select", EntitySelectType::class, null, [
         "entities" => $entities,
         "action" => $this->generateUrl("$this->baseRoute-list", ["edit" => $editMode])])

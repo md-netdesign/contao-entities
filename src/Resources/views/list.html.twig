@@ -72,12 +72,12 @@
     <div id="tl_buttons">
       <a href="{{ path(baseRoute ~ '-list') }}" class="header_back" accesskey="b" title="{{ 'back'|trans }}" onclick="Backend.getScrollOffset()">{{ 'back'|trans }}</a>
     </div>
-  {% elseif canCreate or canDeleteMultiple or block('actions', listTemplate) is defined %}
+  {% elseif canCreate or (canDeleteMultiple and totalEntityCount > 0) or block('actions', listTemplate) is defined %}
     <div id="tl_buttons">
       {% if canCreate %}
         <a href="{{ path(baseRoute ~ '-create') }}" class="header_new" accesskey="n" title="{{ 'new'|trans }}" onclick="Backend.getScrollOffset()">{{ 'new'|trans }}</a>
       {% endif %}
-      {% if canDeleteMultiple %}
+      {% if canDeleteMultiple and totalEntityCount > 0 %}
         <a href="{{ path(baseRoute ~ '-list', {edit: 'multiple'}) }}" class="header_edit_all" accesskey="e" title="{{ 'edit_multiple'|trans }}" onclick="Backend.getScrollOffset()">{{ 'edit_multiple'|trans }}</a>
       {% endif %}
       {% if block('actions', listTemplate) is defined %}
