@@ -38,10 +38,10 @@ class ContaoFileType extends AbstractType
         return join(",", array_map(fn($entry) => StringUtil::binToUuid($entry->uuid), $value));
 
       return StringUtil::binToUuid($value->uuid);
-    }, fn($value) => $this->reverseTransform($value)));
+    }, fn($value) => $this->reverseTransform($value, $options["fieldType"] === "checkbox")));
   }
 
-  private function reverseTransform($value): FilesModel|array|null {
+  private function reverseTransform($value, bool $multiple): FilesModel|array|null {
     if ($value === null)
       return null;
 
@@ -50,7 +50,7 @@ class ContaoFileType extends AbstractType
     if (($sizeOfValue = sizeof($value)) === 0)
       return null;
 
-    if ($sizeOfValue > 1)
+    if ($sizeOfValue > 1 || $multiple)
       return array_map(fn($entry) => FilesModel::findByUuid(StringUtil::uuidToBin($entry)), $value);
 
     return FilesModel::findByUuid(StringUtil::uuidToBin(reset($value)));
@@ -61,7 +61,7 @@ class ContaoFileType extends AbstractType
     $view->vars["extensions"] = $options["extensions"];
     $view->vars["filesOnly"] = $options["filesOnly"];
     $view->vars["fieldType"] = $options["fieldType"];
-    $view->vars["files"] = $files = $this->reverseTransform($view->vars["value"]);
+    $view->vars["files"] = $files = $this->reverseTransform($view->vars["value"], $options["fieldType"] === "checkbox");
     $view->vars["uuids"] = $files === null ? [] : array_values(array_map(fn($file) => StringUtil::binToUuid($file->uuid), is_array($files) ? $files : [$files]));
   }
 
