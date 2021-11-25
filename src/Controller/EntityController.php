@@ -10,6 +10,7 @@ use Doctrine\ORM\NoResultException;
 use MdNetdesign\ContaoEntities\Data\Entity\Repository\FilterableRepository;
 use MdNetdesign\ContaoEntities\Data\Entity\Repository\FilterRepository;
 use MdNetdesign\ContaoEntities\Data\Form\Group;
+use MdNetdesign\ContaoEntities\Form\Type\EntitySelectType;
 use MdNetdesign\ContaoEntities\Form\Type\RequestTokenType;
 use MdNetdesign\ContaoEntities\Services\CloneHelper;
 use MdNetdesign\Form\AutoType;
@@ -38,6 +39,7 @@ class EntityController extends AbstractController
   protected bool $editDisabled = false;
   protected bool $duplicateDisabled = false;
   protected bool $deleteDisabled = false;
+  protected bool $deleteMultipleEnabled = false;
 
   public function setEntityRepository(EntityRepository $entityRepository): EntityController {
     $this->entityRepository = $entityRepository;
@@ -100,8 +102,13 @@ class EntityController extends AbstractController
     return $this;
   }
 
+  public function enableDeleteMultiple(): EntityController {
+    $this->deleteMultipleEnabled = true;
+    return $this;
+  }
+
   #[Route("/list/{!page}", name: "-list", requirements: ["page" => "\d+|\*"], defaults: ["page" => 1], methods: ["GET", "POST"])]
-  public function list(Request $request, Security $security, FormFactoryInterface $formFactory, int $page): Response {
+  public function list(Request $request, Security $security, FormFactoryInterface $formFactory, EntityManagerInterface $entityManager, int $page): Response {
     $this->checkAuthentication($security);
 
     if ($page < 0)
@@ -112,12 +119,14 @@ class EntityController extends AbstractController
     $locale = str_starts_with($request->getLocale(), "en") ? "en" : "de";
     $root = $queryBuilder->getRootAliases()[0];
 
+    $editMode = $this->deleteMultipleEnabled ? $request->query->get("edit") : null;
+
     if ($this->entityRepository instanceof FilterableRepository) {
       if ($request->request->get("filter-reset") === "reset")
         return $this->redirectToRoute("$this->baseRoute-list");
 
       $filterForm = $formFactory->createNamed("filter", $this->entityRepository->getFilterType(), null, [
-        "action" => $this->generateUrl("$this->baseRoute-list")])
+        "action" => $this->generateUrl("$this->baseRoute-list", ["edit" => $editMode])])
         ->add(RequestTokenType::NAME, RequestTokenType::class);
 
       $filterForm->handleRequest($request);
@@ -143,15 +152,39 @@ class EntityController extends AbstractController
 
     $availablePages = ceil($totalEntityCount / $this->entitiesPerPage);
 
+    $entities = $queryBuilder->getQuery()->getResult();
+
+    $selectForm = null;
+    if ($editMode === "multiple") {
+      $selectForm = $formFactory->createNamed("select", EntitySelectType::class, null, [
+        "entities" => $entities,
+        "action" => $this->generateUrl("$this->baseRoute-list", ["edit" => $editMode])])
+        ->add(RequestTokenType::NAME, RequestTokenType::class);
+
+      $selectForm->handleRequest($request);
+      if ($selectForm->isSubmitted() && $selectForm->isValid()) {
+        foreach (array_filter($selectForm->getData()) as $entityId => $_) {
+          if ($request->request->get("action") === "delete")
+            $entityManager->remove($this->entityRepository->find($entityId));
+        }
+
+        $entityManager->flush();
+
+        return $this->redirectToRoute("$this->baseRoute-list");
+      }
+    }
+
     return $this->renderForm("@ContaoEntities/list.html.twig", $this->getRenderParameters([
       "filterForm" => $filterForm,
       "filter" => $filter,
+      "selectForm" => $selectForm,
       "page" => $page,
       "availablePages" => $availablePages,
       "totalEntityCount" => $totalEntityCount,
       "entitiesPerPage" => $this->entitiesPerPage,
-      "entities" => $queryBuilder->getQuery()->getResult(),
-      "listTemplate" => $this->listTemplate]));
+      "entities" => $entities,
+      "listTemplate" => $this->listTemplate,
+      "editMode" => $editMode]));
   }
 
   protected function checkAuthentication(Security $security): bool {
@@ -176,7 +209,8 @@ class EntityController extends AbstractController
       "canCreate" => !$this->createDisabled,
       "canEdit" => !$this->editDisabled,
       "canDuplicate" => !$this->duplicateDisabled,
-      "canDelete" => !$this->deleteDisabled]);
+      "canDelete" => !$this->deleteDisabled,
+      "canDeleteMultiple" => $this->deleteMultipleEnabled]);
   }
 
   #[Route("/delete/{id}", name: "-delete", requirements: ["id" => "\d+"], methods: ["GET"])]

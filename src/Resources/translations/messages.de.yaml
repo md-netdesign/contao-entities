@@ -23,3 +23,7 @@ edit_element: Element ID __id__ bearbeiten
 duplicate_element: Element ID __id__ duplizieren
 delete_element: Element ID __id__ löschen
 delete_confirm: Element ID __id__ löschen?
+edit_multiple: Mehrere bearbeiten
+delete_multiple_confirm: Wollen Sie die ausgewählten Einträge wirklich löschen?
+delete: Löschen
+select_all: Alle auswählen

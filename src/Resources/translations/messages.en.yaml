@@ -23,3 +23,7 @@ edit_element: Edit element ID __id__
 duplicate_element: Duplicate element ID __id__
 delete_element: delete element ID __id__
 delete_confirm: Delete element ID __id__?
+edit_multiple: Edit multiple
+delete_multiple_confirm: Do you really want to delete the selected entries?
+delete: Delete
+select_all: Select all

@@ -12,7 +12,7 @@
       <strong>
         <label for="page">{{ 'do.limit'|trans }}</label>
       </strong>
-      <select id="page" class="tl_select" onchange="location.href={{ path(baseRoute ~ '-list', {page: '0'})|json_encode }}.replace(/0$/i, this.value);">
+      <select id="page" class="tl_select" onchange="location.href={{ path(baseRoute ~ '-list', {page: '0', edit: editMode})|json_encode }}.replace(/0$/i, this.value);">
         <option value="1">{{ 'datasets'|trans }}</option>
         {% for pageCandidate in 1..availablePages %}
           <option value="{{ pageCandidate }}"{% if page == pageCandidate %} selected{% endif %}>{{ (pageCandidate - 1) * entitiesPerPage + 1 }} - {{ min(totalEntityCount, (pageCandidate) * entitiesPerPage) }}</option>
@@ -67,10 +67,18 @@
       {{ limitSubpanel }}
     </div>
   {% endif %}
-  {% if canCreate or block('actions', listTemplate) is defined %}
+  {% set showSelectForm = (editMode == 'multiple' and selectForm is not null) %}
+  {% if showSelectForm %}
+    <div id="tl_buttons">
+      <a href="{{ path(baseRoute ~ '-list') }}" class="header_back" accesskey="b" title="{{ 'back'|trans }}" onclick="Backend.getScrollOffset()">{{ 'back'|trans }}</a>
+    </div>
+  {% elseif canCreate or canDeleteMultiple or block('actions', listTemplate) is defined %}
     <div id="tl_buttons">
       {% if canCreate %}
         <a href="{{ path(baseRoute ~ '-create') }}" class="header_new" accesskey="n" title="{{ 'new'|trans }}" onclick="Backend.getScrollOffset()">{{ 'new'|trans }}</a>
+      {% endif %}
+      {% if canDeleteMultiple %}
+        <a href="{{ path(baseRoute ~ '-list', {edit: 'multiple'}) }}" class="header_edit_all" accesskey="e" title="{{ 'edit_multiple'|trans }}" onclick="Backend.getScrollOffset()">{{ 'edit_multiple'|trans }}</a>
       {% endif %}
       {% if block('actions', listTemplate) is defined %}
         {{ block('actions', listTemplate) }}
@@ -78,8 +86,17 @@
     </div>
   {% endif %}
   {% if entities|length > 0 %}
-    {% set actions = canEdit or canDelete or block('additionalEntryActions', listTemplate) is defined %}
+    {% set actions = canEdit or canDelete or block('additionalEntryActions', listTemplate) is defined or showSelectForm %}
+    {% if showSelectForm %}
+      {{ form_start(selectForm) }}
+    {% endif %}
     <div class="tl_listing_container list_view" id="tl_listing">
+      {% if showSelectForm %}
+        <div class="tl_select_trigger">
+          <label for="tl_select_trigger" class="tl_select_label">{{ 'select_all'|trans }}</label>
+          <input type="checkbox" id="tl_select_trigger" onclick="Backend.toggleCheckboxes(this)" class="tl_tree_checkbox">
+        </div>
+      {% endif %}
       <table class="tl_listing showColumns">
         <tbody>
         <tr>
@@ -92,26 +109,45 @@
           <tr class="even click2edit toggle_select hover-row">
             {{ block('entry', listTemplate) }}
             {% if actions %}
-              <td class="tl_file_list tl_right_nowrap">
-                {% if block('additionalEntryActions', listTemplate) is defined %}
-                  {{ block('additionalEntryActions', listTemplate) }}
-                {% endif %}
-                {% if canEdit %}
-                  <a href="{{ path(baseRoute ~ '-edit', {id: entity.id}) }}" title="{{ 'edit_element'|trans({__id__: entity.id}) }}" class="edit"><img src="{{ asset('system/themes/flexible/icons/edit.svg') }}" width="16" height="16" alt="{{ 'edit_element'|trans({__id__: entity.id}) }}"></a>
-                {% endif %}
-                {% if canDuplicate %}
-                  <a href="{{ path(baseRoute ~ '-duplicate', {id: entity.id}) }}" title="{{ 'duplicate_element'|trans({__id__: entity.id}) }}" class="copy"><img src="{{ asset('system/themes/flexible/icons/copy.svg') }}" width="16" height="16" alt="{{ 'duplicate_element'|trans({__id__: entity.id}) }}"></a>
-                {% endif %}
-                {% if canDelete %}
-                  <a href="{{ path(baseRoute ~ '-delete', {id: entity.id}) }}" title="{{ 'delete_element'|trans({__id__: entity.id}) }}" class="delete" onclick="return confirm('{{ 'delete_confirm'|trans({__id__: entity.id}) }}')"><img src="{{ asset('system/themes/flexible/icons/delete.svg') }}" width="16" height="16" alt="{{ 'delete_element'|trans({__id__: entity.id}) }}"></a>
-                {% endif %}
-              </td>
+              {% if showSelectForm %}
+                <td class="tl_file_list tl_right_nowrap">
+                  {{ form_widget(selectForm['entity' ~ entity.id]) }}
+                </td>
+              {% else %}
+                <td class="tl_file_list tl_right_nowrap">
+                  {% if block('additionalEntryActions', listTemplate) is defined %}
+                    {{ block('additionalEntryActions', listTemplate) }}
+                  {% endif %}
+                  {% if canEdit %}
+                    <a href="{{ path(baseRoute ~ '-edit', {id: entity.id}) }}" title="{{ 'edit_element'|trans({__id__: entity.id}) }}" class="edit"><img src="{{ asset('system/themes/flexible/icons/edit.svg') }}" width="16" height="16" alt="{{ 'edit_element'|trans({__id__: entity.id}) }}"></a>
+                  {% endif %}
+                  {% if canDuplicate %}
+                    <a href="{{ path(baseRoute ~ '-duplicate', {id: entity.id}) }}" title="{{ 'duplicate_element'|trans({__id__: entity.id}) }}" class="copy"><img src="{{ asset('system/themes/flexible/icons/copy.svg') }}" width="16" height="16" alt="{{ 'duplicate_element'|trans({__id__: entity.id}) }}"></a>
+                  {% endif %}
+                  {% if canDelete %}
+                    <a href="{{ path(baseRoute ~ '-delete', {id: entity.id}) }}" title="{{ 'delete_element'|trans({__id__: entity.id}) }}" class="delete" onclick="return confirm('{{ 'delete_confirm'|trans({__id__: entity.id}) }}')"><img src="{{ asset('system/themes/flexible/icons/delete.svg') }}" width="16" height="16" alt="{{ 'delete_element'|trans({__id__: entity.id}) }}"></a>
+                  {% endif %}
+                </td>
+              {% endif %}
             {% endif %}
           </tr>
         {% endfor %}
         </tbody>
       </table>
     </div>
+    {% if showSelectForm %}
+      {% block submitContainer %}
+        <div class="tl_formbody_submit" style="text-align:right;">
+          <div class="tl_submit_container">
+            {% block submit %}
+              <button type="submit" name="action" value="delete" class="tl_submit" accesskey="d" onclick="return confirm('{{ 'delete_multiple_confirm'|trans }}')">{{ 'delete'|trans }}</button>
+            {% endblock %}
+          </div>
+        </div>
+      {% endblock %}
+
+      {{ form_end(selectForm) }}
+    {% endif %}
   {% else %}
     <p class="tl_empty">{{ 'no_entries_found'|trans }}</p>
   {% endif %}
