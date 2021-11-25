@@ -161,7 +161,7 @@ class EntityController extends AbstractController
       throw new AccessDeniedHttpException("Not authenticated in backend.");
 
     if ($this->module !== null)
-      if (!in_array($this->module, $user->modules) && !$user->admin)
+      if (!in_array($this->module, $user->modules ?? []) && !$user->admin)
         throw new AccessDeniedHttpException("No access for module.");
 
     return $user->admin;
