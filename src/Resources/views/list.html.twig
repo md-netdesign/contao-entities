@@ -97,6 +97,7 @@
           <input type="checkbox" id="tl_select_trigger" onclick="Backend.toggleCheckboxes(this)" class="tl_tree_checkbox">
         </div>
       {% endif %}
+      {% set previousGroup = null %}
       <table class="tl_listing showColumns">
         <tbody>
         <tr>
@@ -106,6 +107,15 @@
           {% endif %}
         </tr>
         {% for entity in entities %}
+          {% if groupable and previousGroup != entity.group %}
+            {% set previousGroup = entity.group %}
+            <tr>
+              {{ block('group', listTemplate) }}
+              {% if actions %}
+                <th class="tl_folder_tlist tl_right_nowrap"></th>
+              {% endif %}
+            </tr>
+          {% endif %}
           <tr class="even click2edit toggle_select hover-row">
             {{ block('entry', listTemplate) }}
             {% if actions %}

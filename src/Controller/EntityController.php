@@ -7,6 +7,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\NoResultException;
+use MdNetdesign\ContaoEntities\Data\Entity\Groupable;
 use MdNetdesign\ContaoEntities\Data\Entity\Repository\FilterableRepository;
 use MdNetdesign\ContaoEntities\Data\Entity\Repository\FilterRepository;
 use MdNetdesign\ContaoEntities\Data\Form\Group;
@@ -184,7 +185,8 @@ class EntityController extends AbstractController
       "entitiesPerPage" => $this->entitiesPerPage,
       "entities" => $entities,
       "listTemplate" => $this->listTemplate,
-      "editMode" => $editMode]));
+      "editMode" => $editMode,
+      "groupable" => is_subclass_of($this->entityRepository->getClassName(), Groupable::class)]));
   }
 
   protected function checkAuthentication(Security $security): bool {
@@ -220,10 +222,15 @@ class EntityController extends AbstractController
     if (($instance = $this->entityRepository->find($id)) === null)
       throw new NotFoundHttpException();
 
+    $this->checkAuthenticationForDelete($security, $instance);
+
     $entityManager->remove($instance);
     $entityManager->flush();
 
     return $this->redirectToRoute("$this->baseRoute-list");
+  }
+
+  protected function checkAuthenticationForDelete(Security $security, object $entity): void {
   }
 
   #[Route("/create", name: "-create", methods: ["GET", "POST"])]
@@ -245,9 +252,15 @@ class EntityController extends AbstractController
         if ($this->duplicateDisabled)
           throw new NotFoundHttpException();
 
+        $this->checkAuthenticationForEdit($security, $instance);
+
         $instance = clone $instance;
-      } elseif ($this->editDisabled)
-        throw new NotFoundHttpException();
+      } else {
+        if ($this->editDisabled)
+          throw new NotFoundHttpException();
+
+        $this->checkAuthenticationForEdit($security, $instance);
+      }
 
     $form = $formFactory->createNamed("entity", AutoType::class, $instance, [
       "data_class" => $this->dataClass,
@@ -282,6 +295,9 @@ class EntityController extends AbstractController
       "entity" => $instance,
       "fieldsets" => $fieldsets
     ]));
+  }
+
+  protected function checkAuthenticationForEdit(Security $security, object $entity): void {
   }
 
 }
