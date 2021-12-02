@@ -19,7 +19,7 @@ class FileHelperController extends AbstractController
     $path = $query->get("path");
     $id = $query->get("id");
 
-    $files = array_values(array_filter(array_map(fn($entry) => FilesModel::findByPath($entry), explode("\t", $path))));
+    $files = array_values(array_filter(array_map(fn($entry) => FilesModel::findByPath(urldecode($entry)), explode("\t", $path))));
 
     return $this->render("@ContaoEntities/file-helper/update.html.twig", [
       "id" => $id,
