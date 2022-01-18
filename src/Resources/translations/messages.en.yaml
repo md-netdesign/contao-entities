@@ -27,3 +27,4 @@ edit_multiple: Edit multiple
 delete_multiple_confirm: Do you really want to delete the selected entries?
 delete: Delete
 select_all: Select all
+add_entry: + Add entry

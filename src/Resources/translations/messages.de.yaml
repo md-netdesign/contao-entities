@@ -27,3 +27,4 @@ edit_multiple: Mehrere bearbeiten
 delete_multiple_confirm: Wollen Sie die ausgewählten Einträge wirklich löschen?
 delete: Löschen
 select_all: Alle auswählen
+add_entry: + Eintrag hinzufügen
