@@ -24,7 +24,7 @@
       </div>
     {% endset %}
     {% if filterForm is not null %}
-      {% if filterForm.children is not empty %}
+      {% if filterForm.children|keys|filter(k => k not in ['REQUEST_TOKEN', '_token']) is not empty %}
         {{ form_start(filterForm, {attr: {class: 'tl_form'}}) }}
         <div class="tl_formbody">
           {% set filters = filterForm.children|keys|filter(k => k not in ['REQUEST_TOKEN', '_token', 'search', 'orderBy', 'page']) %}
