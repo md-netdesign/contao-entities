@@ -319,7 +319,7 @@
       if (allowAdd) {
         let $add = document.createElement('button');
         $add.type = 'button';
-        $add.innerText = {{ 'add_entry'|trans|json_encode }};
+        $add.innerText = {{ 'add_entry'|trans|json_encode|raw }};
         $add.classList.add('tl_submit');
         $add.style.display = 'block';
         $add.style.margin = '10px auto 0 15px';
