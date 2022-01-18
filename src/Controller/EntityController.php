@@ -13,7 +13,6 @@ use MdNetdesign\ContaoEntities\Data\Entity\Repository\FilterRepository;
 use MdNetdesign\ContaoEntities\Data\Form\Group;
 use MdNetdesign\ContaoEntities\Form\Type\EntitySelectType;
 use MdNetdesign\ContaoEntities\Form\Type\RequestTokenType;
-use MdNetdesign\ContaoEntities\Services\CloneHelper;
 use MdNetdesign\Form\AutoType;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormFactoryInterface;
@@ -35,6 +34,8 @@ class EntityController extends AbstractController
   protected ?string $instanceTitle = null;
   protected string $dataClass;
   protected int $entitiesPerPage = 100;
+  protected string $listPageTemplate = "@ContaoEntities/list.html.twig";
+  protected string $editPageTemplate = "@ContaoEntities/edit.html.twig";
   protected string $listTemplate = "@ContaoEntities/default.html.twig";
   protected bool $createDisabled = false;
   protected bool $editDisabled = false;
@@ -75,6 +76,16 @@ class EntityController extends AbstractController
 
   public function setEntitiesPerPage(int $entitiesPerPage): EntityController {
     $this->entitiesPerPage = $entitiesPerPage;
+    return $this;
+  }
+
+  public function setListPageTemplate(string $listPageTemplate): EntityController {
+    $this->listPageTemplate = $listPageTemplate;
+    return $this;
+  }
+
+  public function setEditPageTemplate(string $editPageTemplate): EntityController {
+    $this->editPageTemplate = $editPageTemplate;
     return $this;
   }
 
@@ -142,7 +153,7 @@ class EntityController extends AbstractController
       $totalEntityCount = (clone $queryBuilder)
         ->select("count($root.id)")
         ->getQuery()->getSingleScalarResult();
-    } catch (NoResultException | NonUniqueResultException) {
+    } catch (NoResultException|NonUniqueResultException) {
       $totalEntityCount = 0;
     }
 
@@ -175,7 +186,7 @@ class EntityController extends AbstractController
       }
     }
 
-    return $this->renderForm("@ContaoEntities/list.html.twig", $this->getRenderParameters([
+    return $this->renderForm($this->listPageTemplate, $this->getRenderParameters([
       "filterForm" => $filterForm,
       "filter" => $filter,
       "selectForm" => $selectForm,
@@ -290,7 +301,7 @@ class EntityController extends AbstractController
 
     $fieldsets = array_values(array_unique(array_map(fn(FormInterface $form) => $form->getConfig()->getOption("row_attr")["data-fieldset"] ?? null, array_filter($form->all(), fn(FormInterface $form) => $form->getName() !== "REQUEST_TOKEN" && !str_starts_with($form->getName(), "_")))));
 
-    return $this->renderForm("@ContaoEntities/edit.html.twig", $this->getRenderParameters([
+    return $this->renderForm($this->editPageTemplate, $this->getRenderParameters([
       "form" => $form,
       "entity" => $instance,
       "fieldsets" => $fieldsets
