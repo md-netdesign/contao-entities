@@ -24,46 +24,48 @@
       </div>
     {% endset %}
     {% if filterForm is not null %}
-      {{ form_start(filterForm, {attr: {class: 'tl_form'}}) }}
-      <div class="tl_formbody">
-        {% set filters = filterForm.children|keys|filter(k => k not in ['REQUEST_TOKEN', '_token', 'search', 'orderBy', 'page']) %}
-        {% if filters|length %}
+      {% if filterForm.children is not empty %}
+        {{ form_start(filterForm, {attr: {class: 'tl_form'}}) }}
+        <div class="tl_formbody">
+          {% set filters = filterForm.children|keys|filter(k => k not in ['REQUEST_TOKEN', '_token', 'search', 'orderBy', 'page']) %}
+          {% if filters|length %}
+            <div class="tl_panel cf">
+              <div class="tl_filter tl_subpanel">
+                <strong>{{ 'do.filter'|trans }}</strong>
+                {% for filter in filters %}
+                  {{ form_widget(filterForm[filter], {attr: {class: 'tl_select'}}) }}
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
           <div class="tl_panel cf">
-            <div class="tl_filter tl_subpanel">
-              <strong>{{ 'do.filter'|trans }}</strong>
-              {% for filter in filters %}
-                {{ form_widget(filterForm[filter], {attr: {class: 'tl_select'}}) }}
-              {% endfor %}
+            <div class="tl_submit_panel tl_subpanel">
+              <button id="filter" class="tl_img_submit filter_apply" title="{{ 'apply'|trans }}">{{ 'apply'|trans }}</button>
+              <button name="filter-reset" id="filter_reset" value="reset" class="tl_img_submit filter_reset" title="{{ 'reset'|trans }}">{{ 'reset'|trans }}</button>
             </div>
+            {% if totalEntityCount > 0 %}
+              {{ limitSubpanel }}
+            {% endif %}
+            {% if 'search' in filterForm.children|keys %}
+              <div class="tl_search tl_subpanel">
+                <strong>
+                  {{ form_label(filterForm.search) }}
+                </strong>
+                {{ form_widget(filterForm.search, {attr: {class: 'tl_text', style: 'width:68%;'}}) }}
+              </div>
+            {% endif %}
+            {% if 'orderBy' in filterForm.children|keys %}
+              <div class="tl_sorting tl_subpanel">
+                <strong>
+                  {{ form_label(filterForm.orderBy) }}
+                </strong>
+                {{ form_widget(filterForm.orderBy, {attr: {class: 'tl_select'}}) }}
+              </div>
+            {% endif %}
           </div>
-        {% endif %}
-        <div class="tl_panel cf">
-          <div class="tl_submit_panel tl_subpanel">
-            <button id="filter" class="tl_img_submit filter_apply" title="{{ 'apply'|trans }}">{{ 'apply'|trans }}</button>
-            <button name="filter-reset" id="filter_reset" value="reset" class="tl_img_submit filter_reset" title="{{ 'reset'|trans }}">{{ 'reset'|trans }}</button>
-          </div>
-          {% if totalEntityCount > 0 %}
-            {{ limitSubpanel }}
-          {% endif %}
-          {% if 'search' in filterForm.children|keys %}
-            <div class="tl_search tl_subpanel">
-              <strong>
-                {{ form_label(filterForm.search) }}
-              </strong>
-              {{ form_widget(filterForm.search, {attr: {class: 'tl_text', style: 'width:68%;'}}) }}
-            </div>
-          {% endif %}
-          {% if 'orderBy' in filterForm.children|keys %}
-            <div class="tl_sorting tl_subpanel">
-              <strong>
-                {{ form_label(filterForm.orderBy) }}
-              </strong>
-              {{ form_widget(filterForm.orderBy, {attr: {class: 'tl_select'}}) }}
-            </div>
-          {% endif %}
         </div>
-      </div>
-      {{ form_end(filterForm) }}
+        {{ form_end(filterForm) }}
+      {% endif %}
     {% elseif totalEntityCount > 0 %}
       <div class="tl_panel cf">
         {{ limitSubpanel }}
