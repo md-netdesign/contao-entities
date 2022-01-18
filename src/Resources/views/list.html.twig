@@ -7,84 +7,92 @@
 {% block error %}{% endblock %}
 
 {% block main %}
-  {% set limitSubpanel %}
-    <div class="tl_limit tl_subpanel">
-      <strong>
-        <label for="page">{{ 'do.limit'|trans }}</label>
-      </strong>
-      <select id="page" class="tl_select" onchange="location.href={{ path(baseRoute ~ '-list', {page: '0', edit: editMode})|json_encode }}.replace(/0$/i, this.value);">
-        <option value="1">{{ 'datasets'|trans }}</option>
-        {% for pageCandidate in 1..availablePages %}
-          <option value="{{ pageCandidate }}"{% if page == pageCandidate %} selected{% endif %}>{{ (pageCandidate - 1) * entitiesPerPage + 1 }} - {{ min(totalEntityCount, (pageCandidate) * entitiesPerPage) }}</option>
-        {% endfor %}
-        <option value="0"{% if page == 0 %} selected{% endif %}>{{ 'all'|trans }}</option>
-      </select>
-    </div>
-  {% endset %}
-  {% if filterForm is not null %}
-    {{ form_start(filterForm, {attr: {class: 'tl_form'}}) }}
-    <div class="tl_formbody">
-      {% set filters = filterForm.children|keys|filter(k => k not in ['REQUEST_TOKEN', '_token', 'search', 'orderBy', 'page']) %}
-      {% if filters|length %}
+
+  {% block filter %}
+    {% set limitSubpanel %}
+      <div class="tl_limit tl_subpanel">
+        <strong>
+          <label for="page">{{ 'do.limit'|trans }}</label>
+        </strong>
+        <select id="page" class="tl_select" onchange="location.href={{ path(baseRoute ~ '-list', {page: '0', edit: editMode})|json_encode }}.replace(/0$/i, this.value);">
+          <option value="1">{{ 'datasets'|trans }}</option>
+          {% for pageCandidate in 1..availablePages %}
+            <option value="{{ pageCandidate }}"{% if page == pageCandidate %} selected{% endif %}>{{ (pageCandidate - 1) * entitiesPerPage + 1 }} - {{ min(totalEntityCount, (pageCandidate) * entitiesPerPage) }}</option>
+          {% endfor %}
+          <option value="0"{% if page == 0 %} selected{% endif %}>{{ 'all'|trans }}</option>
+        </select>
+      </div>
+    {% endset %}
+    {% if filterForm is not null %}
+      {{ form_start(filterForm, {attr: {class: 'tl_form'}}) }}
+      <div class="tl_formbody">
+        {% set filters = filterForm.children|keys|filter(k => k not in ['REQUEST_TOKEN', '_token', 'search', 'orderBy', 'page']) %}
+        {% if filters|length %}
+          <div class="tl_panel cf">
+            <div class="tl_filter tl_subpanel">
+              <strong>{{ 'do.filter'|trans }}</strong>
+              {% for filter in filters %}
+                {{ form_widget(filterForm[filter], {attr: {class: 'tl_select'}}) }}
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
         <div class="tl_panel cf">
-          <div class="tl_filter tl_subpanel">
-            <strong>{{ 'do.filter'|trans }}</strong>
-            {% for filter in filters %}
-              {{ form_widget(filterForm[filter], {attr: {class: 'tl_select'}}) }}
-            {% endfor %}
+          <div class="tl_submit_panel tl_subpanel">
+            <button id="filter" class="tl_img_submit filter_apply" title="{{ 'apply'|trans }}">{{ 'apply'|trans }}</button>
+            <button name="filter-reset" id="filter_reset" value="reset" class="tl_img_submit filter_reset" title="{{ 'reset'|trans }}">{{ 'reset'|trans }}</button>
           </div>
+          {% if totalEntityCount > 0 %}
+            {{ limitSubpanel }}
+          {% endif %}
+          {% if 'search' in filterForm.children|keys %}
+            <div class="tl_search tl_subpanel">
+              <strong>
+                {{ form_label(filterForm.search) }}
+              </strong>
+              {{ form_widget(filterForm.search, {attr: {class: 'tl_text', style: 'width:68%;'}}) }}
+            </div>
+          {% endif %}
+          {% if 'orderBy' in filterForm.children|keys %}
+            <div class="tl_sorting tl_subpanel">
+              <strong>
+                {{ form_label(filterForm.orderBy) }}
+              </strong>
+              {{ form_widget(filterForm.orderBy, {attr: {class: 'tl_select'}}) }}
+            </div>
+          {% endif %}
         </div>
-      {% endif %}
+      </div>
+      {{ form_end(filterForm) }}
+    {% elseif totalEntityCount > 0 %}
       <div class="tl_panel cf">
-        <div class="tl_submit_panel tl_subpanel">
-          <button id="filter" class="tl_img_submit filter_apply" title="{{ 'apply'|trans }}">{{ 'apply'|trans }}</button>
-          <button name="filter-reset" id="filter_reset" value="reset" class="tl_img_submit filter_reset" title="{{ 'reset'|trans }}">{{ 'reset'|trans }}</button>
-        </div>
-        {% if totalEntityCount > 0 %}
-          {{ limitSubpanel }}
+        {{ limitSubpanel }}
+      </div>
+    {% endif %}
+  {% endblock %}
+
+  {% set showSelectForm = (editMode == 'multiple' and selectForm is not null) %}
+
+  {% block globalButtons %}
+    {% if showSelectForm %}
+      <div id="tl_buttons">
+        <a href="{{ path(baseRoute ~ '-list') }}" class="header_back" accesskey="b" title="{{ 'back'|trans }}" onclick="Backend.getScrollOffset()">{{ 'back'|trans }}</a>
+      </div>
+    {% elseif canCreate or (canDeleteMultiple and totalEntityCount > 0) or block('actions', listTemplate) is defined %}
+      <div id="tl_buttons">
+        {% if canCreate %}
+          <a href="{{ path(baseRoute ~ '-create') }}" class="header_new" accesskey="n" title="{{ 'new'|trans }}" onclick="Backend.getScrollOffset()">{{ 'new'|trans }}</a>
         {% endif %}
-        {% if 'search' in filterForm.children|keys %}
-          <div class="tl_search tl_subpanel">
-            <strong>
-              {{ form_label(filterForm.search) }}
-            </strong>
-            {{ form_widget(filterForm.search, {attr: {class: 'tl_text', style: 'width:68%;'}}) }}
-          </div>
+        {% if canDeleteMultiple and totalEntityCount > 0 %}
+          <a href="{{ path(baseRoute ~ '-list', {edit: 'multiple'}) }}" class="header_edit_all" accesskey="e" title="{{ 'edit_multiple'|trans }}" onclick="Backend.getScrollOffset()">{{ 'edit_multiple'|trans }}</a>
         {% endif %}
-        {% if 'orderBy' in filterForm.children|keys %}
-          <div class="tl_sorting tl_subpanel">
-            <strong>
-              {{ form_label(filterForm.orderBy) }}
-            </strong>
-            {{ form_widget(filterForm.orderBy, {attr: {class: 'tl_select'}}) }}
-          </div>
+        {% if block('actions', listTemplate) is defined %}
+          {{ block('actions', listTemplate) }}
         {% endif %}
       </div>
-    </div>
-    {{ form_end(filterForm) }}
-  {% elseif totalEntityCount > 0 %}
-    <div class="tl_panel cf">
-      {{ limitSubpanel }}
-    </div>
-  {% endif %}
-  {% set showSelectForm = (editMode == 'multiple' and selectForm is not null) %}
-  {% if showSelectForm %}
-    <div id="tl_buttons">
-      <a href="{{ path(baseRoute ~ '-list') }}" class="header_back" accesskey="b" title="{{ 'back'|trans }}" onclick="Backend.getScrollOffset()">{{ 'back'|trans }}</a>
-    </div>
-  {% elseif canCreate or (canDeleteMultiple and totalEntityCount > 0) or block('actions', listTemplate) is defined %}
-    <div id="tl_buttons">
-      {% if canCreate %}
-        <a href="{{ path(baseRoute ~ '-create') }}" class="header_new" accesskey="n" title="{{ 'new'|trans }}" onclick="Backend.getScrollOffset()">{{ 'new'|trans }}</a>
-      {% endif %}
-      {% if canDeleteMultiple and totalEntityCount > 0 %}
-        <a href="{{ path(baseRoute ~ '-list', {edit: 'multiple'}) }}" class="header_edit_all" accesskey="e" title="{{ 'edit_multiple'|trans }}" onclick="Backend.getScrollOffset()">{{ 'edit_multiple'|trans }}</a>
-      {% endif %}
-      {% if block('actions', listTemplate) is defined %}
-        {{ block('actions', listTemplate) }}
-      {% endif %}
-    </div>
-  {% endif %}
+    {% endif %}
+  {% endblock %}
+
   {% if entities|length > 0 %}
     {% set actions = canEdit or canDelete or block('additionalEntryActions', listTemplate) is defined or showSelectForm %}
     {% if showSelectForm %}
