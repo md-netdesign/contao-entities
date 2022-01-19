@@ -200,7 +200,7 @@ class EntityController extends AbstractController
       "groupable" => is_subclass_of($this->entityRepository->getClassName(), Groupable::class)]));
   }
 
-  protected function checkAuthentication(Security $security): bool {
+  protected function checkAuthentication(Security $security): BackendUser {
     /** @var BackendUser $user */
     $user = $security->getUser();
 
@@ -211,7 +211,7 @@ class EntityController extends AbstractController
       if (!in_array($this->module, $user->modules ?? []) && !$user->admin)
         throw new AccessDeniedHttpException("No access for module.");
 
-    return $user->admin;
+    return $user;
   }
 
   protected function getRenderParameters(array $source = []): array {
@@ -248,7 +248,7 @@ class EntityController extends AbstractController
   #[Route("/edit/{id}", name: "-edit", requirements: ["id" => "\d+"], methods: ["GET", "POST"])]
   #[Route("/duplicate/{id}", name: "-duplicate", requirements: ["id" => "\d+"], defaults: ["duplicate" => true], methods: ["GET", "POST"])]
   public function edit(Request $request, Security $security, FormFactoryInterface $formFactory, EntityManagerInterface $entityManager, bool $duplicate = false, ?int $id = null): Response {
-    $isUserAdmin = $this->checkAuthentication($security);
+    $user = $this->checkAuthentication($security);
 
     if ($id === null) {
       if ($this->createDisabled)
@@ -273,9 +273,11 @@ class EntityController extends AbstractController
         $this->checkAuthenticationForEdit($security, $instance);
       }
 
+    $additionalModuleGroups = is_array($user->modules) ? array_values(array_map(fn(string $module) => "contao_module:$module", $user->modules)) : [];
+
     $form = $formFactory->createNamed("entity", AutoType::class, $instance, [
       "data_class" => $this->dataClass,
-      "groups" => $isUserAdmin ? [Group::CONTAO, Group::CONTAO_ADMIN] : [Group::CONTAO],
+      "groups" => array_values(array_merge($user->isAdmin ? [Group::CONTAO, Group::CONTAO_ADMIN] : [Group::CONTAO], $additionalModuleGroups)),
       "action" => $id === null ?
         $this->generateUrl("$this->baseRoute-create") :
         ($duplicate ?
