@@ -17,7 +17,7 @@ class ContaoFileType extends AbstractType
 
   public function configureOptions(OptionsResolver $resolver) {
     $resolver->setDefault("extensions", "jpg,jpeg,png,svg,webp");
-    $resolver->setAllowedTypes("extensions", "string");
+    $resolver->setAllowedTypes("extensions", ["string", "null"]);
 
     $resolver->setDefault("filesOnly", true);
     $resolver->setAllowedTypes("filesOnly", "bool");
@@ -41,21 +41,6 @@ class ContaoFileType extends AbstractType
     }, fn($value) => $this->reverseTransform($value, $options["fieldType"] === "checkbox")));
   }
 
-  private function reverseTransform($value, bool $multiple): FilesModel|array|null {
-    if ($value === null || trim($value) === "")
-      return null;
-
-    $value = explode(",", $value);
-
-    if (($sizeOfValue = sizeof($value)) === 0)
-      return null;
-
-    if ($sizeOfValue > 1 || $multiple)
-      return array_map(fn($entry) => FilesModel::findByUuid(StringUtil::uuidToBin($entry)), $value);
-
-    return FilesModel::findByUuid(StringUtil::uuidToBin(reset($value)));
-  }
-
   public function buildView(FormView $view, FormInterface $form, array $options) {
     parent::buildView($view, $form, $options);
     $view->vars["extensions"] = $options["extensions"];
@@ -71,6 +56,21 @@ class ContaoFileType extends AbstractType
 
   public function getBlockPrefix(): string {
     return "contao_file";
+  }
+
+  private function reverseTransform($value, bool $multiple): FilesModel|array|null {
+    if ($value === null || trim($value) === "")
+      return null;
+
+    $value = explode(",", $value);
+
+    if (($sizeOfValue = sizeof($value)) === 0)
+      return null;
+
+    if ($sizeOfValue > 1 || $multiple)
+      return array_map(fn($entry) => FilesModel::findByUuid(StringUtil::uuidToBin($entry)), $value);
+
+    return FilesModel::findByUuid(StringUtil::uuidToBin(reset($value)));
   }
 
 }

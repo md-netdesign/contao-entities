@@ -238,7 +238,7 @@
         $$('select.tl_chosen:not([style])').chosen();
 
         document.dispatchEvent(new Event('sf-form-collection-updated'));
-      }
+      };
 
       const addButtons = () => {
         $container.querySelectorAll(':scope > div:not(.clr)')
@@ -260,7 +260,7 @@
 
                 $row.append($orderUp);
 
-                $orderUp.addEventListener('click', e => !$orderUp.disabled && swapRows($row, $row.previousElementSibling, e.ctrlKey))
+                $orderUp.addEventListener('click', e => !$orderUp.disabled && swapRows($row, $row.previousElementSibling, e.ctrlKey));
               }
               $orderUp.disabled = index === 0;
 
@@ -280,7 +280,7 @@
 
                 $row.append($orderDown);
 
-                $orderDown.addEventListener('click', () => !$orderDown.disabled && swapRows($row, $row.nextElementSibling))
+                $orderDown.addEventListener('click', () => !$orderDown.disabled && swapRows($row, $row.nextElementSibling));
               }
               $orderDown.disabled = index === $all.length - 1;
             }
@@ -345,9 +345,8 @@
         context: 'file',
         extras: {
           fieldType: fieldType,
-          filesOnly: filesOnly ? 1 : 0,
-          extensions: extensions|default('jpg')
-        }
+          filesOnly: filesOnly ? 1 : 0
+        }|merge(extensions is null ? {} : {extensions: extensions})
       }) }}" class="tl_submit" id="{{ id }}_btn">{{ 'change_selection'|trans }}</a>
     </p>
     <script>
