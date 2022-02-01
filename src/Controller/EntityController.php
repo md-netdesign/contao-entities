@@ -200,6 +200,32 @@ class EntityController extends AbstractController
       "groupable" => is_subclass_of($this->entityRepository->getClassName(), Groupable::class)]));
   }
 
+  protected function checkAuthentication(Security $security): BackendUser {
+    /** @var BackendUser $user */
+    $user = $security->getUser();
+
+    if (!($user instanceof BackendUser))
+      throw new AccessDeniedHttpException("Not authenticated in backend.");
+
+    if ($this->module !== null)
+      if (!in_array($this->module, $user->modules ?? []) && !$user->admin)
+        throw new AccessDeniedHttpException("No access for module.");
+
+    return $user;
+  }
+
+  protected function getRenderParameters(array $source = []): array {
+    return array_merge($source, [
+      "baseRoute" => $this->baseRoute,
+      "title" => $this->title,
+      "instanceTitle" => $this->instanceTitle,
+      "canCreate" => !$this->createDisabled,
+      "canEdit" => !$this->editDisabled,
+      "canDuplicate" => !$this->duplicateDisabled,
+      "canDelete" => !$this->deleteDisabled,
+      "canDeleteMultiple" => $this->deleteMultipleEnabled]);
+  }
+
   #[Route("/delete/{id}", name: "-delete", requirements: ["id" => "\d+"], methods: ["GET"])]
   public function delete(Security $security, EntityManagerInterface $entityManager, int $id): Response {
     $this->checkAuthentication($security);
@@ -215,6 +241,9 @@ class EntityController extends AbstractController
     return $this->redirectToRoute("$this->baseRoute-list");
   }
 
+  protected function checkAuthenticationForDelete(Security $security, object $entity): void {
+  }
+
   #[Route("/create", name: "-create", methods: ["GET", "POST"])]
   #[Route("/edit/{id}", name: "-edit", requirements: ["id" => "\d+"], methods: ["GET", "POST"])]
   #[Route("/duplicate/{id}", name: "-duplicate", requirements: ["id" => "\d+"], defaults: ["duplicate" => true], methods: ["GET", "POST"])]
@@ -225,7 +254,7 @@ class EntityController extends AbstractController
       if ($this->createDisabled)
         throw new NotFoundHttpException();
 
-      $instance = null;
+      $instance = $this->createNewInstance();
     } elseif (($instance = $this->entityRepository->find($id)) === null)
       throw new NotFoundHttpException();
 
@@ -281,33 +310,8 @@ class EntityController extends AbstractController
     ]));
   }
 
-  protected function checkAuthentication(Security $security): BackendUser {
-    /** @var BackendUser $user */
-    $user = $security->getUser();
-
-    if (!($user instanceof BackendUser))
-      throw new AccessDeniedHttpException("Not authenticated in backend.");
-
-    if ($this->module !== null)
-      if (!in_array($this->module, $user->modules ?? []) && !$user->admin)
-        throw new AccessDeniedHttpException("No access for module.");
-
-    return $user;
-  }
-
-  protected function getRenderParameters(array $source = []): array {
-    return array_merge($source, [
-      "baseRoute" => $this->baseRoute,
-      "title" => $this->title,
-      "instanceTitle" => $this->instanceTitle,
-      "canCreate" => !$this->createDisabled,
-      "canEdit" => !$this->editDisabled,
-      "canDuplicate" => !$this->duplicateDisabled,
-      "canDelete" => !$this->deleteDisabled,
-      "canDeleteMultiple" => $this->deleteMultipleEnabled]);
-  }
-
-  protected function checkAuthenticationForDelete(Security $security, object $entity): void {
+  protected function createNewInstance(): ?object {
+    return null;
   }
 
   protected function checkAuthenticationForEdit(Security $security, object $entity): void {
