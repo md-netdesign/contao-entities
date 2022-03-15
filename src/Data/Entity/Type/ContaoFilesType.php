@@ -19,14 +19,17 @@ class ContaoFilesType extends Type
     if ($value === null)
       return null;
 
-    return array_values(array_map(fn($entry) => FilesModel::findByUuid($entry), explode("\t", $value)));
+    if (str_contains($value, "\t"))
+      return array_values(array_map(fn($entry) => FilesModel::findByUuid($entry), explode("\t", $value)));
+
+    return array_values(array_map(fn($entry) => FilesModel::findByUuid(hex2bin($entry)), explode(":", $value)));
   }
 
   public function convertToDatabaseValue($value, AbstractPlatform $platform) {
     if (!is_array($value))
       return null;
 
-    return join("\t", array_map(fn($entry) => $entry->uuid, $value));
+    return join(":", array_map(fn($entry) => bin2hex($entry->uuid), $value));
   }
 
   public function requiresSQLCommentHint(AbstractPlatform $platform): bool {
