@@ -197,7 +197,24 @@ class EntityController extends AbstractController
       "entities" => $entities,
       "listTemplate" => $this->listTemplate,
       "editMode" => $editMode,
-      "groupable" => is_subclass_of($this->entityRepository->getClassName(), Groupable::class)]));
+      "groupable" => is_subclass_of($this->entityRepository->getClassName(), Groupable::class),
+      "isEntityEditable" => function (object $entity) use ($security) {
+        try {
+          $this->checkAuthenticationForEdit($security, $entity);
+          return true;
+        } catch (AccessDeniedHttpException) {
+          return false;
+        }
+      },
+      "isEntityDeletable" => function (object $entity) use ($security) {
+        try {
+          $this->checkAuthenticationForDelete($security, $entity);
+          return true;
+        } catch (AccessDeniedHttpException) {
+          return false;
+        }
+      }
+    ]));
   }
 
   #[Route("/delete/{id}", name: "-delete", requirements: ["id" => "\d+"], methods: ["GET"])]

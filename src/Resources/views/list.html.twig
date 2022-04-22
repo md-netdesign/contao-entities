@@ -141,13 +141,13 @@
                     {% endif %}
                   {% endblock %}
                   {% block actions %}
-                    {% if canEdit %}
+                    {% if canEdit and isEntityEditable(entity) %}
                       <a href="{{ path(baseRoute ~ '-edit', {id: entity.id}) }}" title="{{ 'edit_element'|trans({__id__: entity.id}) }}" class="edit"><img src="{{ asset('system/themes/flexible/icons/edit.svg') }}" width="16" height="16" alt="{{ 'edit_element'|trans({__id__: entity.id}) }}"></a>
                     {% endif %}
-                    {% if canDuplicate %}
+                    {% if canDuplicate and isEntityEditable(entity) %}
                       <a href="{{ path(baseRoute ~ '-duplicate', {id: entity.id}) }}" title="{{ 'duplicate_element'|trans({__id__: entity.id}) }}" class="copy"><img src="{{ asset('system/themes/flexible/icons/copy.svg') }}" width="16" height="16" alt="{{ 'duplicate_element'|trans({__id__: entity.id}) }}"></a>
                     {% endif %}
-                    {% if canDelete %}
+                    {% if canDelete and isEntityDeletable(entity) %}
                       <a href="{{ path(baseRoute ~ '-delete', {id: entity.id}) }}" title="{{ 'delete_element'|trans({__id__: entity.id}) }}" class="delete" onclick="return confirm('{{ 'delete_confirm'|trans({__id__: entity.id}) }}')"><img src="{{ asset('system/themes/flexible/icons/delete.svg') }}" width="16" height="16" alt="{{ 'delete_element'|trans({__id__: entity.id}) }}"></a>
                     {% endif %}
                   {% endblock %}
