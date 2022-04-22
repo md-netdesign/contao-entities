@@ -198,6 +198,7 @@ class EntityController extends AbstractController
       "listTemplate" => $this->listTemplate,
       "editMode" => $editMode,
       "groupable" => is_subclass_of($this->entityRepository->getClassName(), Groupable::class),
+      "entityController" => $this,
       "isEntityEditable" => function (object $entity) use ($security) {
         try {
           $this->checkAuthenticationForEdit($security, $entity);
