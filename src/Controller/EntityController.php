@@ -288,6 +288,9 @@ class EntityController extends AbstractController
         $entityManager->persist($instance);
         $entityManager->flush();
 
+        if ($this->editDisabled)
+          return $this->redirectToRoute("$this->baseRoute-list");
+
         return match ($request->request->get("save")) {
           "close" => $this->redirectToRoute("$this->baseRoute-list"),
           default => $this->redirectToRoute("$this->baseRoute-edit", ["id" => $instance->getId()])
