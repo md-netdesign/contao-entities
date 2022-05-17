@@ -285,8 +285,12 @@ class EntityController extends AbstractController
       if ($form->isValid()) {
         $instance = $form->getData();
 
+        $this->onPreSave($instance);
+
         $entityManager->persist($instance);
         $entityManager->flush();
+
+        $this->onPostSave($instance);
 
         if ($this->editDisabled)
           return $this->redirectToRoute("$this->baseRoute-list");
@@ -306,6 +310,12 @@ class EntityController extends AbstractController
       "entity" => $instance,
       "fieldsets" => $fieldsets
     ]));
+  }
+
+  protected function onPreSave(object $instance): void {
+  }
+
+  protected function onPostSave(object $instance): void {
   }
 
   protected function checkAuthentication(Security $security): BackendUser {
