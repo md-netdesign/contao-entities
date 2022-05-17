@@ -151,7 +151,7 @@ class EntityController extends AbstractController
 
     try {
       $totalEntityCount = (clone $queryBuilder)
-        ->select("count($root.id)")
+        ->select("count(distinct $root.id)")
         ->getQuery()->getSingleScalarResult();
     } catch (NoResultException|NonUniqueResultException) {
       $totalEntityCount = 0;
