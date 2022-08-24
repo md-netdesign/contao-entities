@@ -35,10 +35,25 @@ class ContaoFileType extends AbstractType
         return null;
 
       if (is_array($value))
-        return join(",", array_map(fn($entry) => StringUtil::binToUuid($entry->uuid), $value));
+        return join(",", array_filter(array_map(fn($entry) => $entry === null ? null : StringUtil::binToUuid($entry->uuid), $value)));
 
       return StringUtil::binToUuid($value->uuid);
     }, fn($value) => $this->reverseTransform($value, $options["fieldType"] === "checkbox")));
+  }
+
+  private function reverseTransform($value, bool $multiple): FilesModel|array|null {
+    if ($value === null || trim($value) === "")
+      return null;
+
+    $value = explode(",", $value);
+
+    if (($sizeOfValue = sizeof($value)) === 0)
+      return null;
+
+    if ($sizeOfValue > 1 || $multiple)
+      return array_map(fn($entry) => FilesModel::findByUuid(StringUtil::uuidToBin($entry)), $value);
+
+    return FilesModel::findByUuid(StringUtil::uuidToBin(reset($value)));
   }
 
   public function buildView(FormView $view, FormInterface $form, array $options) {
@@ -56,21 +71,6 @@ class ContaoFileType extends AbstractType
 
   public function getBlockPrefix(): string {
     return "contao_file";
-  }
-
-  private function reverseTransform($value, bool $multiple): FilesModel|array|null {
-    if ($value === null || trim($value) === "")
-      return null;
-
-    $value = explode(",", $value);
-
-    if (($sizeOfValue = sizeof($value)) === 0)
-      return null;
-
-    if ($sizeOfValue > 1 || $multiple)
-      return array_map(fn($entry) => FilesModel::findByUuid(StringUtil::uuidToBin($entry)), $value);
-
-    return FilesModel::findByUuid(StringUtil::uuidToBin(reset($value)));
   }
 
 }
